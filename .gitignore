@@ -41,3 +41,19 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local certificates and private keys
+*.pem
+*.key
+
+# Local backup files
+*.backup
+*.backup2
+
+# Local reports
+audit-report.json

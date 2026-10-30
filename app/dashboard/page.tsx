@@ -1,60 +1,142 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+type User = {
+  name: string;
+  email: string;
+};
+
 export default function DashboardPage() {
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem('user');
-    if (!storedUser) {
-      router.push('/login');
-    } else {
-      setUser(JSON.parse(storedUser));
+    // อ่านข้อมูลผู้ใช้ที่เก็บไว้หลัง Login
+    try {
+      const savedUser = localStorage.getItem('user');
+
+      if (!savedUser) {
+        router.replace('/login');
+        return;
+      }
+
+      const parsedUser = JSON.parse(savedUser);
+
+      if (!parsedUser.name || !parsedUser.email) {
+        localStorage.removeItem('user');
+        router.replace('/login');
+        return;
+      }
+
+      setUser({
+        name: parsedUser.name,
+        email: parsedUser.email,
+      });
+    } catch {
+      localStorage.removeItem('user');
+      router.replace('/login');
+      return;
     }
+
+    setChecking(false);
   }, [router]);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('user');
-    router.push('/login');
-  };
+  function handleLogout() {
+    // ลบข้อมูลผู้ใช้และ Cookie token
+    localStorage.removeItem('user');
 
-  if (!user) return null;
+    document.cookie =
+      'token=; Path=/; Max-Age=0; SameSite=Lax';
+
+    router.replace('/login');
+  }
+
+  if (checking || !user) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: '#f3f4f6',
+          fontFamily: 'Arial, sans-serif',
+          color: '#374151',
+        }}
+      >
+        กำลังตรวจสอบบัญชี...
+      </main>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-2xl bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl">
-        <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
-          <h1 className="text-2xl font-bold text-indigo-400">ระบบจัดการข้อมูลส่วนตัว</h1>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-sm font-semibold rounded-lg transition"
-          >
-            ออกจากระบบ
-          </button>
-        </div>
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        padding: 20,
+        boxSizing: 'border-box',
+        background: '#f3f4f6',
+        fontFamily: 'Arial, sans-serif',
+        color: '#111827',
+      }}
+    >
+      <section
+        style={{
+          width: '100%',
+          maxWidth: 520,
+          boxSizing: 'border-box',
+          padding: 34,
+          background: '#ffffff',
+          border: '1px solid #e5e7eb',
+          borderRadius: 12,
+          boxShadow: '0 2px 5px rgba(0,0,0,0.04)',
+        }}
+      >
+        <h1
+          style={{
+            margin: '0 0 24px',
+            fontSize: 36,
+            fontWeight: 700,
+          }}
+        >
+          Dashboard
+        </h1>
 
-        <div className="space-y-4 bg-gray-900/50 p-6 rounded-xl border border-gray-800">
-          <div>
-            <p className="text-sm text-gray-400">ชื่อ - นามสกุล</p>
-            <p className="text-lg font-semibold">{user.name}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-400">รหัสนักศึกษา</p>
-            <p className="text-lg font-semibold">6806255</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-400">อีเมลที่ใช้เข้าสู่ระบบ</p>
-            <p className="text-lg font-semibold">{user.email}</p>
-          </div>
-        </div>
+        <p style={{ fontSize: 18, margin: '0 0 16px' }}>
+          Welcome, {user.name}
+        </p>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
-          เชื่อมต่อฐานข้อมูลสำเร็จด้วย TiDB Cloud & Prisma ORM 🚀
-        </div>
-      </div>
-    </div>
+        <p
+          style={{
+            fontSize: 18,
+            margin: '0 0 24px',
+            overflowWrap: 'anywhere',
+          }}
+        >
+          Email: {user.email}
+        </p>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          style={{
+            padding: '14px 18px',
+            border: 'none',
+            borderRadius: 8,
+            background: '#0e879b',
+            color: '#ffffff',
+            fontSize: 16,
+            cursor: 'pointer',
+          }}
+        >
+          Logout
+        </button>
+      </section>
+    </main>
   );
 }
